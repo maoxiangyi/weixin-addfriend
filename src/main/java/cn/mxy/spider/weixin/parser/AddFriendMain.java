@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.ClientProtocolException;
@@ -25,6 +26,7 @@ import com.google.gson.Gson;
 
 import cn.mxy.spider.weixin.domain.AddFriendRequest;
 import cn.mxy.spider.weixin.domain.BaseRequest;
+import cn.mxy.spider.weixin.domain.BaseResponse;
 import cn.mxy.spider.weixin.domain.BatchRequest;
 import cn.mxy.spider.weixin.domain.Group;
 import cn.mxy.spider.weixin.domain.GroupMemberResponse;
@@ -35,9 +37,17 @@ import cn.mxy.spider.weixin.domain.VerifyUser;
 import cn.mxy.spider.weixin.util.FileUtil;
 
 public class AddFriendMain {
+
+	private static String cookie = "gv_pvi=3803484160; pgv_si=s7525085184; MM_WX_NOTIFY_STATE=1; MM_WX_SOUND_STATE=1; wxuin=457245275; wxsid=sy3MXZgLxNkcaYYk; wxloadtime=1502784335; mm_lang=zh_CN; webwx_data_ticket=gSe9TDf3iDYTdmm5+sjoNePr; webwxuvid=9de99e77a3eec08376d31e03398ef309ca6b4e6d26ca36fdbe2d98c2e985af2079ad5d71b11894eb2cde6e080026c51d; webwx_auth_ticket=CIsBEIqCmYoFGoABsh9oMlPerMTtimXc9rEPSOVUsyd00nckw1gjh7NzHrHsslNTA8Cdl/uOOVQhLJEo4IOZZWd7K0fKuCCMYN99jhmIJCUNgXSAcK7DbX8SZ7Je+jLQCFVRhVG7+arlUHjn104pcPROuIy6uber9XyQzpg6cDMdpDyYYzWlbMYAJAI=; login_frequency=1; last_wxuin=457245275";
+	private static String pass_ticket = "UbuIFJ99Lzu9IUlwx8kruDt%252BMASnb6ZzAL3UHHy2jjYerWBbIrE6ef6nEDASFTi5";
+	private static String skey = "@crypt_e80a62f_0a7344c4decfabb035d8eb6967da2a7a";
+
 	public static void main(String[] args) throws Exception {
 		System.out.println("启动微信机器人……");
-		String api = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetcontact?r=1502459493994&seq=0&skey=@crypt_e80a62f_8006d79";
+		// String api =
+		// "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetcontact?r=1502459493994&seq=0&skey=@crypt_e80a62f_8006d79";
+		String api = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxgetcontact?pass_ticket=" + pass_ticket
+				+ "&r=1502784469159&seq=0&skey=" + skey;
 		HashMap<String, String> headerInfoMap = headerInfoMap();
 		String json = getHtml(api, headerInfoMap);
 		System.out.println("……获取用户的所有好友信息");
@@ -45,18 +55,28 @@ public class AddFriendMain {
 		// 解析Json串
 		Response response = parseJson(json);
 		System.out.println(response.getMemberList());
+		// 封装用户的好友信息
+		HashMap<String, String> userFriendMap = new HashMap<String, String>();
+		userFriendMap.put("@db9edb87779acee8e3d7fdee38de1f90", "");
+		for (Member member : response.getMemberList()) {
+			userFriendMap.put(member.getUserName(), "");
+		}
 		// 找出那些是微信群
 		ArrayList<Member> groupList = findWXGroup(response);
 		System.out.println("……提取用户的微信群");
 		FileUtil.saveStringToFile(groupList.toString(), "c:/用户的群信息");
 		// 每个群的群成员及关系
-		getGroupContact(groupList);
+		getGroupContact(groupList, userFriendMap);
 
 	}
 
-	private static void getGroupContact(ArrayList<Member> groupList) throws Exception {
+	private static void getGroupContact(ArrayList<Member> groupList, HashMap<String, String> userFriendMap)
+			throws Exception {
 		// 获取微信群的好友列表
-		String api = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxbatchgetcontact?type=ex&r=1502525127909";
+		// String api =
+		// "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxbatchgetcontact?type=ex&r=1502525127909";
+		String api = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxbatchgetcontact?type=ex&r=1502784469159&pass_ticket="
+				+ pass_ticket;
 		// 准备参数
 		BatchRequest initRequestParam = initRequestParam(groupList);
 		// 将参数转化成json串
@@ -70,25 +90,37 @@ public class AddFriendMain {
 		List<Group> contactList = groupInfo.getContactList();
 		System.out.println("……保存每个群的详细信息");
 		for (Group group : contactList) {
+			System.out.println(group.getNickName());
 			// 保存群和群的成员
 			FileUtil.saveStringToFile(group.getMemberList().toString(), "c:/群【" + group.getNickName() + "】的成员列表.txt");
 		}
 		for (Group group : contactList) {
-			System.out.println("……当前群名称：" + group.getNickName());
-			List<Member> memberList = group.getMemberList();
-			for (Member member : memberList) {
-				System.out.println("…………识别用户" + member.getNickName() + "是否已经是好友关系");
-				addFriend(member);
-				System.out.println("…………自动添加" + member.getNickName());
-				System.out.println("…………休息5s,然后在开始");
-				Thread.sleep(5 * 1000);
+			if (group.getNickName().contains("Spring")) {
+				List<Member> memberList = group.getMemberList();
+				for (Member member : memberList) {
+					System.out.println("…………识别用户" + member.getNickName() + "是否已经是好友关系");
+
+					if (!userFriendMap.containsKey(member.getUserName())) {
+						addFriend(member);
+						System.out.println("…………自动添加" + member.getNickName());
+						Random random = new Random();
+						int sleep = Math.abs(random.nextInt(30));
+						System.out.println("…………休息" + sleep + "s,然后在开始");
+						Thread.sleep(sleep * 1000);
+					} else {
+						System.out.println(member.getNickName() + "已经是好友了！");
+					}
+					System.out.println("------------------------");
+				}
 			}
 		}
 
 	}
 
 	private static void addFriend(Member member) throws Exception, Exception {
-		String api = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxverifyuser?r=1502528004153";
+		// String api =
+		// "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxverifyuser?r=1502528004153";
+		String api = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxverifyuser?r=1502765153332&pass_ticket=" + pass_ticket;
 		// 准备请求参数
 		AddFriendRequest addFriendRequest = new AddFriendRequest();
 		// 基础信息
@@ -97,16 +129,24 @@ public class AddFriendMain {
 		ArrayList<VerifyUser> arrayList = new ArrayList<VerifyUser>();
 		VerifyUser verifyUser = new VerifyUser();
 		verifyUser.setValue(member.getUserName());
+		verifyUser.setVerifyUserTicket("");
 		arrayList.add(verifyUser);
 		addFriendRequest.setVerifyUserList(arrayList);
-		// 验证信息
-		addFriendRequest.setVerifyContent("我是毛祥溢，正在开发微信机器人，这个一个测试。");
 
+		addFriendRequest.setSkey(getBaseRequest().getSkey());
+		// 验证信息
+		addFriendRequest.setVerifyContent("我是毛祥溢，在开发微信机器人，想自动添加群好友。");
 		Gson gson = new Gson();
 		String json = gson.toJson(addFriendRequest);
 		String html = postHtml(api, headerInfoMap(), json);
-		// System.out.println(html);
 		System.out.println(html);
+//		BaseResponse res = JSON.parseObject(html, BaseResponse.class);
+//		System.out.println(res);
+//		if (res.getRet() == 0) {
+//			System.out.println("啦啦啦啦啦…………添加成功啦！");
+//		} else {
+//			System.out.println("不开心，被腾讯公司发现了！" + res.getRet());
+//		}
 	}
 
 	private static BatchRequest initRequestParam(ArrayList<Member> groupList) {
@@ -133,10 +173,10 @@ public class AddFriendMain {
 
 	private static BaseRequest getBaseRequest() {
 		BaseRequest baseRequest = new BaseRequest();
-		baseRequest.setSid("h1IbMklk02KQ8dvF");
-		baseRequest.setSkey("@crypt_e80a62f_e84047ff64025605149b9cfb65bcd879");
-		baseRequest.setUin(457245275);
-		baseRequest.setDeviceID("e660400080556092");
+		baseRequest.setSid("sy3MXZgLxNkcaYYk");
+		baseRequest.setSkey(skey);
+		baseRequest.setUin(457245275l);
+		baseRequest.setDeviceID("e600730799268609");
 		return baseRequest;
 	}
 
@@ -233,8 +273,7 @@ public class AddFriendMain {
 		headerInfoMap.put("Accept-Language", "zh-CN,zh;q=0.8");
 		headerInfoMap.put("Cache-Control", "max-age=0");
 		headerInfoMap.put("Connection", "keep-alive");
-		headerInfoMap.put("Cookie",
-				"pgv_pvi=1855142912; pgv_si=s4165670912; MM_WX_NOTIFY_STATE=1; MM_WX_SOUND_STATE=1; mm_lang=zh_CN; webwxuvid=9de99e77a3eec08376d31e03398ef309ddf32bd00c3f56319b3d743fe83d32bb8b8ec91df10d6ecebe4a2dbf0f191e2c; webwx_auth_ticket=CIsBEISDjYYGGoABAnycEatzaa+39LW05lF5eOVUsyd00nckw1gjh7NzHrE2Q/J7ivIOGqQWOXgAonP7sOvKtoVBQnfHy6L3CmEmXtqbuQCxbLUHRlWhC5oIC+tM2xsYJNH7rsQuYIKw1Kl9kfkrwANLe+B1PNDT1vf/7Jg6cDMdpDyYYzWlbMYAJAI=; login_frequency=1; last_wxuin=457245275; wxloadtime=1502705141_expired; wxpluginkey=1502705370; wxuin=457245275; wxsid=JX+wIgGNxkOgpJ/l; webwx_data_ticket=gSfVlxzTfRVecv0VSijUxQVk");
+		headerInfoMap.put("Cookie", cookie);
 		headerInfoMap.put("Host", "wx.qq.com");
 		headerInfoMap.put("Upgrade-Insecure-headerInfoMaps", "1");
 		headerInfoMap.put("User-Agent",

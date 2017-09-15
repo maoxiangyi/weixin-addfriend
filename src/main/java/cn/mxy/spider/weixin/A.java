@@ -89,7 +89,7 @@ public class A {
 	public void testEclipseConsolePrint() throws FileNotFoundException, IOException {
 		long startTime = System.currentTimeMillis();
 		ArrayList<Member> arrayList = new ArrayList<Member>();
-		for(int i=1;i<1300;i++){
+		for(int i=1;i<2600;i++){
 			Member member = new Member();
 			arrayList.add(member);
 		}

@@ -1,24 +1,27 @@
 package cn.mxy.spider.weixin.domain;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 public class AddFriendRequest {
 
 	private BaseRequest BaseRequest;
-	private int Opcode = 2;
 	private int VerifyUserListSize = 1;
+	private int Opcode = 2;
 	private List<VerifyUser> VerifyUserList;
 	private String VerifyContent;
-	private int SceneListCount = 33;
-	private int[] SceneList = new int[1];
+	private int SceneListCount = 1;
+//	private List<Integer> SceneList = new ArrayList<Integer>();
+	
+	private  ArrayList<Integer> SceneList = new ArrayList<Integer>(){{add(33);}};  
+	
+	
 	private String skey;
 	public BaseRequest getBaseRequest() {
 		return BaseRequest;
 	}
 	public void setBaseRequest(BaseRequest baseRequest) {
 		BaseRequest = baseRequest;
-		skey = baseRequest.getSkey();
 	}
 	public int getOpcode() {
 		return Opcode;
@@ -50,10 +53,14 @@ public class AddFriendRequest {
 	public void setSceneListCount(int sceneListCount) {
 		SceneListCount = sceneListCount;
 	}
-	public int[] getSceneList() {
+	
+	
+	
+	
+	public ArrayList<Integer> getSceneList() {
 		return SceneList;
 	}
-	public void setSceneList(int[] sceneList) {
+	public void setSceneList(ArrayList<Integer> sceneList) {
 		SceneList = sceneList;
 	}
 	public String getSkey() {
@@ -64,13 +71,10 @@ public class AddFriendRequest {
 	}
 	@Override
 	public String toString() {
-		return "AddFriendRequest [BaseRequest=" + BaseRequest + ", Opcode=" + Opcode + ", VerifyUserListSize="
-				+ VerifyUserListSize + ", VerifyUserList=" + VerifyUserList + ", VerifyContent=" + VerifyContent
-				+ ", SceneListCount=" + SceneListCount + ", SceneList=" + Arrays.toString(SceneList) + ", skey=" + skey
-				+ "]";
+		return "AddFriendRequest [BaseRequest=" + BaseRequest + ", VerifyUserListSize=" + VerifyUserListSize
+				+ ", Opcode=" + Opcode + ", VerifyUserList=" + VerifyUserList + ", VerifyContent=" + VerifyContent
+				+ ", SceneListCount=" + SceneListCount + ", SceneList=" + SceneList + ", skey=" + skey + "]";
 	}
-	
-	
 	
 
 }

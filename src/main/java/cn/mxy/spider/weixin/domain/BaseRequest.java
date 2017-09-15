@@ -1,7 +1,7 @@
 package cn.mxy.spider.weixin.domain;
 
 public class BaseRequest {
-	private int Uin;
+	private Long Uin;
 	private String Sid;
 	private String Skey;
 	private String DeviceID;
@@ -12,10 +12,14 @@ public class BaseRequest {
 	public void setDeviceID(String deviceID) {
 		DeviceID = deviceID;
 	}
-	public int getUin() {
+
+	
+	
+	
+	public Long getUin() {
 		return Uin;
 	}
-	public void setUin(int uin) {
+	public void setUin(Long uin) {
 		Uin = uin;
 	}
 	public String getSid() {
